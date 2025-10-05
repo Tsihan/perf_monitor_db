@@ -23,7 +23,7 @@ OBJECTS = $(SOURCES:.c=.o)
 HEADERS = perfmon.h
 
 # Examples
-EXAMPLES = example_simple example_postgresql
+EXAMPLES = example_simple 
 EXAMPLE_OBJECTS = $(EXAMPLES:=.o)
 
 # Default target
@@ -52,9 +52,6 @@ example_simple: example_simple.o $(LIB_STATIC)
 	$(CC) -o $@ $< -L. -lperfmon -static
 	@echo "Built example: $@"
 
-example_postgresql: example_postgresql.o $(LIB_STATIC)
-	$(CC) -o $@ $< -L. -lperfmon -static
-	@echo "Built example: $@"
 
 # Install library and headers
 install: all

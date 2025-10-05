@@ -263,6 +263,7 @@ NestLoopState *
 ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 {
 	NestLoopState *nlstate;
+	/* Qihan: performance monitoring */
 	perfmon_context_t *perfmon_ctx;
 
 	/* check for unsupported flags */
@@ -271,7 +272,7 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 	NL1_printf("ExecInitNestLoop: %s\n",
 			   "initializing node");
 
-	/* 初始化性能监控 */
+	/* Qihan: 初始化性能监控 */
 	perfmon_ctx = perfmon_init();
 	if (perfmon_ctx && perfmon_start(perfmon_ctx)) {
 		elog(LOG, "[PERFMON] NestLoop: Started monitoring");
@@ -353,7 +354,7 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 	nlstate->nl_NeedNewOuter = true;
 	nlstate->nl_MatchedOuter = false;
 
-	/* 保存perfmon context到nlstate，以便在ExecEndNestLoop中使用 */
+	/* Qihan:保存perfmon context到nlstate，以便在ExecEndNestLoop中使用 */
 	nlstate->perfmon_ctx = perfmon_ctx;
 
 	NL1_printf("ExecInitNestLoop: %s\n",
@@ -371,12 +372,13 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 void
 ExecEndNestLoop(NestLoopState *node)
 {
+	/* Qihan: performance monitoring statistics */
 	perfmon_stats_t stats;
 
 	NL1_printf("ExecEndNestLoop: %s\n",
 			   "ending node processing");
 
-	/* 停止性能监控并输出统计 */
+	/* Qihan: 停止性能监控并输出统计 */
 	if (node->perfmon_ctx) {
 		if (perfmon_stop(node->perfmon_ctx, &stats)) {
 			elog(LOG, "[PERFMON] NestLoop: cycles=%lu, insn=%lu, ipc=%.2f, "

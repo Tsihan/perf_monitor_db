@@ -2024,7 +2024,6 @@ typedef struct NestLoopState
 	bool		nl_NeedNewOuter;
 	bool		nl_MatchedOuter;
 	TupleTableSlot *nl_NullInnerTupleSlot;
-	void	   *perfmon_ctx;	/* performance monitoring context */
 } NestLoopState;
 
 /* ----------------
@@ -2125,6 +2124,7 @@ typedef struct HashJoinState
 	int			hj_JoinState;
 	bool		hj_MatchedOuter;
 	bool		hj_OuterNotEmpty;
+	void	   *perfmon_ctx;	/* Qihan: performance monitoring context */
 } HashJoinState;
 
 
