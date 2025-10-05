@@ -275,7 +275,8 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 	/* Qihan: 初始化性能监控 */
 	perfmon_ctx = perfmon_init();
 	if (perfmon_ctx && perfmon_start(perfmon_ctx)) {
-		elog(LOG, "[PERFMON] NestLoop: Started monitoring");
+		elog(LOG, "[PERFMON] NestLoop[node_id=%d]: Started monitoring",
+			 node->join.plan.plan_node_id);
 	}
 
 	/*
@@ -381,11 +382,12 @@ ExecEndNestLoop(NestLoopState *node)
 	/* Qihan: 停止性能监控并输出统计 */
 	if (node->perfmon_ctx) {
 		if (perfmon_stop(node->perfmon_ctx, &stats)) {
-			elog(LOG, "[PERFMON] NestLoop: cycles=%lu, insn=%lu, ipc=%.2f, "
+			elog(LOG, "[PERFMON] NestLoop[node_id=%d]: cycles=%lu, insn=%lu, ipc=%.2f, "
 					  "branches=%lu, branch_miss=%.2f%%, "
 					  "cache_refs=%lu, cache_miss=%.2f%%, "
 					  "page_faults=%lu, context_switches=%lu, "
 					  "time=%.6fs",
+				 node->js.ps.plan->plan_node_id,
 				 stats.cycles, stats.instructions, stats.insn_per_cycle,
 				 stats.branches, stats.branch_miss_rate,
 				 stats.cache_references, stats.cache_miss_rate,
