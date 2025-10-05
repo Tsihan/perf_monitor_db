@@ -2125,6 +2125,7 @@ typedef struct HashJoinState
 	int			hj_JoinState;
 	bool		hj_MatchedOuter;
 	bool		hj_OuterNotEmpty;
+	void	   *perfmon_ctx;	/* Qihan: performance monitoring context */
 } HashJoinState;
 
 
