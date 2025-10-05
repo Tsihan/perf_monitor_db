@@ -1,0 +1,21 @@
+# Build artifacts
+*.o
+*.a
+*.so
+*.so.*
+
+# Example executables
+example_simple
+example_postgresql
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
