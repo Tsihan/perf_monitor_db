@@ -1,95 +1,95 @@
 #!/bin/bash
 #
-# 将libperfmon集成到PostgreSQL源码的辅助脚本
+# Helper script to integrate libperfmon into PostgreSQL source code
 #
 
 set -e
 
-# 默认PostgreSQL源码路径
+# Default PostgreSQL source path
 PG_SRC_DIR="${1:-/mydata/postgresql-16.4}"
 
-# 检查PostgreSQL源码目录是否存在
+# Check if PostgreSQL source directory exists
 if [ ! -d "$PG_SRC_DIR" ]; then
-    echo "错误: PostgreSQL源码目录不存在: $PG_SRC_DIR"
-    echo "用法: $0 [postgresql源码目录路径]"
+    echo "Error: PostgreSQL source directory does not exist: $PG_SRC_DIR"
+    echo "Usage: $0 [postgresql_source_directory_path]"
     exit 1
 fi
 
 echo "==================================="
-echo "libperfmon PostgreSQL集成脚本"
+echo "libperfmon PostgreSQL Integration Script"
 echo "==================================="
 echo ""
-echo "PostgreSQL源码目录: $PG_SRC_DIR"
+echo "PostgreSQL source directory: $PG_SRC_DIR"
 echo ""
 
-# 获取当前脚本所在目录(libperfmon目录)
+# Get current script directory (libperfmon directory)
 LIBPERFMON_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-echo "步骤 1/4: 编译libperfmon..."
+echo "Step 1/4: Building libperfmon..."
 cd "$LIBPERFMON_DIR"
 if [ ! -f libperfmon.a ]; then
     make clean
     make
 fi
-echo "✓ libperfmon编译完成"
+echo "✓ libperfmon build complete"
 echo ""
 
-echo "步骤 2/4: 复制库文件到PostgreSQL源码..."
-# 复制静态库
+echo "Step 2/4: Copying library files to PostgreSQL source..."
+# Copy static library
 cp -v libperfmon.a "$PG_SRC_DIR/src/backend/"
-echo "✓ 复制 libperfmon.a"
+echo "✓ Copied libperfmon.a"
 
-# 复制头文件
+# Copy header file
 mkdir -p "$PG_SRC_DIR/src/include/utils"
 cp -v perfmon.h "$PG_SRC_DIR/src/include/utils/"
-echo "✓ 复制 perfmon.h"
+echo "✓ Copied perfmon.h"
 echo ""
 
-echo "步骤 3/4: 备份和修改PostgreSQL Makefile..."
+echo "Step 3/4: Backing up and modifying PostgreSQL Makefile..."
 BACKEND_MAKEFILE="$PG_SRC_DIR/src/backend/Makefile"
 
-# 备份原始Makefile
+# Backup original Makefile
 if [ ! -f "${BACKEND_MAKEFILE}.perfmon.bak" ]; then
     cp "$BACKEND_MAKEFILE" "${BACKEND_MAKEFILE}.perfmon.bak"
-    echo "✓ 备份原始Makefile到 ${BACKEND_MAKEFILE}.perfmon.bak"
+    echo "✓ Backed up original Makefile to ${BACKEND_MAKEFILE}.perfmon.bak"
 else
-    echo "✓ Makefile备份已存在,跳过备份"
+    echo "✓ Makefile backup already exists, skipping backup"
 fi
 
-# 检查是否已经添加了libperfmon
+# Check if libperfmon has already been added
 if grep -q "libperfmon.a" "$BACKEND_MAKEFILE"; then
-    echo "✓ Makefile已包含libperfmon配置,跳过修改"
+    echo "✓ Makefile already contains libperfmon configuration, skipping modification"
 else
     echo "" >> "$BACKEND_MAKEFILE"
     echo "# libperfmon support" >> "$BACKEND_MAKEFILE"
     echo "OBJS += libperfmon.a" >> "$BACKEND_MAKEFILE"
-    echo "✓ 修改Makefile添加libperfmon支持"
+    echo "✓ Modified Makefile to add libperfmon support"
 fi
 echo ""
 
-echo "步骤 4/4: 创建示例集成代码..."
+echo "Step 4/4: Creating example integration code..."
 
-# 创建perfmon_wrapper示例文件
+# Create perfmon_wrapper example file
 WRAPPER_EXAMPLE="$PG_SRC_DIR/perfmon_wrapper_example.c"
 cat > "$WRAPPER_EXAMPLE" << 'EOF'
 /*
  * perfmon_wrapper_example.c
- *   示例: 如何在PostgreSQL中使用libperfmon
+ *   Example: How to use libperfmon in PostgreSQL
  *
- * 这个文件展示了如何创建封装函数和宏来在PostgreSQL中使用libperfmon。
- * 你可以根据实际需求修改这些代码并集成到相应的PostgreSQL源文件中。
+ * This file demonstrates how to create wrapper functions and macros to use libperfmon in PostgreSQL.
+ * You can modify this code according to your needs and integrate it into the appropriate PostgreSQL source files.
  */
 
 #include "postgres.h"
 #include "utils/perfmon.h"
 #include "utils/elog.h"
 
-/* 全局变量 */
+/* Global variables */
 static perfmon_context_t *pg_perfmon_ctx = NULL;
 static bool perfmon_enabled = false;
 
 /*
- * 初始化性能监控(在postmaster启动时调用)
+ * Initialize performance monitoring (call at postmaster startup)
  */
 void InitPerfMon(void)
 {
@@ -111,7 +111,7 @@ void InitPerfMon(void)
 }
 
 /*
- * 清理性能监控(在postmaster关闭时调用)
+ * Cleanup performance monitoring (call at postmaster shutdown)
  */
 void ShutdownPerfMon(void)
 {
@@ -124,7 +124,7 @@ void ShutdownPerfMon(void)
 }
 
 /*
- * 便捷宏: 在任意函数中使用
+ * Convenience macros: use in any function
  */
 #define PERFMON_START(name) \
     perfmon_stats_t perfmon_stats_##name; \
@@ -146,15 +146,15 @@ void ShutdownPerfMon(void)
     }
 
 /*
- * 使用示例: 在ExecutorRun中添加监控
+ * Usage example: Add monitoring to ExecutorRun
  *
- * 修改 src/backend/executor/execMain.c:
+ * Modify src/backend/executor/execMain.c:
  *
  * void ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count, bool execute_once)
  * {
  *     PERFMON_START(executor);
  *     
- *     // ... 原有代码 ...
+ *     // ... original code ...
  *     
  *     PERFMON_END(executor, "ExecutorRun");
  * }
@@ -162,36 +162,36 @@ void ShutdownPerfMon(void)
 
 EOF
 
-echo "✓ 创建示例代码: $WRAPPER_EXAMPLE"
+echo "✓ Created example code: $WRAPPER_EXAMPLE"
 echo ""
 
 echo "==================================="
-echo "集成完成!"
+echo "Integration Complete!"
 echo "==================================="
 echo ""
-echo "下一步操作:"
+echo "Next Steps:"
 echo ""
-echo "1. 查看集成示例代码:"
+echo "1. View the integration example code:"
 echo "   cat $WRAPPER_EXAMPLE"
 echo ""
-echo "2. 在PostgreSQL源码中添加监控代码(参考上面的示例)"
-echo "   推荐修改的文件:"
+echo "2. Add monitoring code to PostgreSQL source (refer to the example above)"
+echo "   Recommended files to modify:"
 echo "   - src/backend/executor/execMain.c"
 echo "   - src/backend/executor/nodeSeqscan.c"
 echo "   - src/backend/executor/nodeHashjoin.c"
 echo ""
-echo "3. 重新编译PostgreSQL:"
+echo "3. Rebuild PostgreSQL:"
 echo "   cd $PG_SRC_DIR"
 echo "   make clean"
 echo "   make -j\$(nproc)"
 echo "   sudo make install"
 echo ""
-echo "4. 配置系统权限:"
+echo "4. Configure system permissions:"
 echo "   echo -1 | sudo tee /proc/sys/kernel/perf_event_paranoid"
 echo ""
-echo "5. 重启PostgreSQL并查看日志"
+echo "5. Restart PostgreSQL and check the logs"
 echo ""
-echo "更多详细信息请参考:"
+echo "For more details, please refer to:"
 echo "  - README.md"
 echo "  - POSTGRESQL_INTEGRATION.md"
 echo ""
